@@ -11,31 +11,19 @@
 /*                                                             */
 /***************************************************************/
 
-#ifndef _SIM_SHELL_H_
-#define _SIM_SHELL_H_
+#ifndef __SIM_H
+#define __SIM_H 
 
-#include <stdint.h>
+#define STATUS_OK  0
+#define STATUS_ERR 1
 
-#define FALSE 0
-#define TRUE  1
+// static size of instruction handler dispatch
+// opcode and function field sizes are both 6 bits
+#define DISPATCH_SIZE 128
 
-#define MIPS_REGS 32
+void init_opcode_dispatch   (void);
+void init_function_dispatch (void);
+void init_target_dispatch   (void);
 
-typedef struct CPU_State_Struct {
-  uint32_t PC;		         // program counter
-  uint32_t REGS[MIPS_REGS];      // register file
-  uint32_t HI; 			 // special register for mul/div
-  uint32_t LO;                   // special register for mul/div
-} CPU_State;
+#endif // __SIM_H
 
-extern CPU_State CURRENT_STATE;
-extern CPU_State NEXT_STATE;
-
-extern int RUN_BIT;	/* run bit */
-
-uint32_t mem_read_32  (uint32_t address);
-void     mem_write_32 (uint32_t address, uint32_t value);
-
-void process_instruction();
-
-#endif
