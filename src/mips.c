@@ -12,4 +12,12 @@
 /***************************************************************/
 
 
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "sim.h"
+#include "mips.h"
+#include "shell.h"
+#include "decode.h"
 
