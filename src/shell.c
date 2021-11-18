@@ -19,6 +19,7 @@
 
 #include "shell.h"
 #include "mips.h"
+#include "sim.h"
 
 
 /***************************************************************/
@@ -118,7 +119,7 @@ void load_program(char *program_filename) {
 /*                                                             */
 /* Procedure : init_memory                                     */
 /*                                                             */
-/* Purpose   : Allocate and zero memoryy                       */
+/* Purpose   : Allocate and zero memory                        */
 /*                                                             */
 /***************************************************************/
 
@@ -175,6 +176,17 @@ int main(int argc, char *argv[]) {
     initialize(argv[1], argc-1);
     
     // initialize opcode and function dispatchers
+    init_opcode_dispatch();
+    init_function_dispatch();
+    init_target_dispatch();
+
+    if ((dumpsim_file = fopen("dumpsim", "w")) == NULL) {  // creates an empty file for writing
+	printf("Error: Can't open dumpsim file\n");
+	exit(-1);
+    }
+
+    while (1)
+	get_command(dumpsim_file);
 }
 
 
