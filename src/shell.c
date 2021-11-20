@@ -25,7 +25,6 @@
 /***************************************************************/
 /* Main memory.                                                */
 /***************************************************************/
-
 #define MEM_DATA_START  0x10000000
 #define MEM_DATA_SIZE   0x00100000
 #define MEM_TEXT_START  0x00400000
@@ -53,6 +52,247 @@ mem_region_t MEM_REGIONS[] = {
 
 #define MEM_NREGIONS (sizeof(MEM_REGIONS) / sizeof(mem_region_t))
 
+/***************************************************************/
+/* CPU State info.                                             */
+/***************************************************************/
+CPU_State CURRENT_STATE;
+CPU_State NEXT_STATE;
+
+int RUN_BIT;
+int INSTRUCTION_COUNT;
+
+
+/***************************************************************/
+/*                                                             */
+/* Procedure: cycle                                            */
+/*                                                             */
+/* Purpose: Execute a instruction (cycle)                      */
+/*                                                             */
+/***************************************************************/
+void cycle() {
+    process_instruction();
+    CURRENT_STATE = NEXT_STATE;
+    INSTRUCTION_COUNT++;
+}
+
+
+/***************************************************************/
+/*                                                             */
+/* Procedure : help                                            */
+/*                                                             */
+/* Purpose   : Print out a list of commands                    */
+/*                                                             */
+/***************************************************************/
+void help() {                                                    
+  printf("----------------MIPS ISIM Help------------------------\n");
+  printf("go                    - run program to completion     \n");
+  printf("run n                 - execute program for n instrs  \n");
+  printf("mdump low high        - dump memory from low to high  \n");
+  printf("rdump                 - dump the register & bus value \n");
+  printf("input reg_num reg_val - set GPR reg_num to reg_val    \n");
+  printf("high value            - set the HI register to value  \n");
+  printf("low value             - set the LO register to value  \n");
+  printf("?                     - display this help menu        \n");
+  printf("quit                  - exit the program              \n\n");
+}
+
+
+/***************************************************************/ 
+/*                                                             */
+/* Procedure : mdump                                           */
+/*                                                             */
+/* Purpose   : Dump a word-aligned region of memory to the     */
+/*             output file.                                    */
+/*                                                             */
+/***************************************************************/
+
+void mdump(FILE * dumpsim_file, int start, int stop) {          
+  int address;
+
+  printf("\nMemory content [0x%08x..0x%08x] :\n", start, stop);
+  printf("-------------------------------------\n");
+  for (address = start; address <= stop; address += 4)
+    printf("  0x%08x (%d) : 0x%08x\n", address, address, mem_read_32(address));
+  printf("\n");
+
+  // dump the memory contents into the dumpsim file 
+  fprintf(dumpsim_file, "\nMemory content [0x%08x..0x%08x] :\n", start, stop);
+  fprintf(dumpsim_file, "-------------------------------------\n");
+  for (address = start; address <= stop; address += 4)
+    fprintf(dumpsim_file, "  0x%08x (%d) : 0x%08x\n", address, address, mem_read_32(address));
+  fprintf(dumpsim_file, "\n");
+}
+
+
+/***************************************************************/
+/*                                                             */
+/* Procedure : rdump                                           */
+/*                                                             */
+/* Purpose   : Dump current register and bus values to the     */   
+/*             output file.                                    */
+/*                                                             */
+/***************************************************************/
+void rdump(FILE * dumpsim_file) {                               
+  int k; 
+
+  printf("\nCurrent register/bus values :\n");
+  printf("-------------------------------------\n");
+  printf("Instruction Count : %u\n", INSTRUCTION_COUNT);
+  printf("PC                : 0x%08x\n", CURRENT_STATE.PC);
+  printf("Registers:\n");
+  for (k = 0; k < MIPS_REGS; k++)
+    printf("R%d: 0x%08x\n", k, CURRENT_STATE.REGS[k]);
+  printf("HI: 0x%08x\n", CURRENT_STATE.HI);
+  printf("LO: 0x%08x\n", CURRENT_STATE.LO);
+  printf("\n");
+
+  // dump the state information into the dumpsim file 
+  fprintf(dumpsim_file, "\nCurrent register/bus values :\n");
+  fprintf(dumpsim_file, "-------------------------------------\n");
+  fprintf(dumpsim_file, "Instruction Count : %u\n", INSTRUCTION_COUNT);
+  fprintf(dumpsim_file, "PC                : 0x%08x\n", CURRENT_STATE.PC);
+  fprintf(dumpsim_file, "Registers:\n");
+  for (k = 0; k < MIPS_REGS; k++)
+    fprintf(dumpsim_file, "R%d: 0x%08x\n", k, CURRENT_STATE.REGS[k]);
+  fprintf(dumpsim_file, "HI: 0x%08x\n", CURRENT_STATE.HI);
+  fprintf(dumpsim_file, "LO: 0x%08x\n", CURRENT_STATE.LO);
+  fprintf(dumpsim_file, "\n");
+}
+
+
+/***************************************************************/
+/*                                                             */
+/* Procedure: run n                                            */
+/*                                                             */
+/* Purpose: Simulate MIPS for n cycles                         */
+/*                                                             */
+/***************************************************************/
+void run(int num_cycles) {
+    int i;
+
+    if (RUN_BIT == FALSE) {
+	printf("Can't simulate, Simulator is halted\n\n");
+	return;
+    }
+
+    printf("Simulating for %d cycles...\n\n", num_cycles);
+
+    for (i = 0; i < num_cycles; i++) {
+	if (RUN_BIT == FALSE) {
+	    printf("Simulator halted \n\n");
+	    break;
+	}
+
+	cycle();
+    }
+
+}
+
+
+/***************************************************************/
+/*                                                             */
+/* Procedure: go                                               */
+/*                                                             */
+/* Purpose: Simulate MIPS until HALTed                         */
+/*                                                             */
+/***************************************************************/
+
+void go() {
+    if (RUN_BIT == FALSE) {
+	printf("Can't simulated, Simulator is halted\n\n");
+	return;
+    }
+
+    printf("Simulating... \n\n");
+    while (RUN_BIT) {
+	cycle();
+    }
+    printf("Simulator halted\n\n");
+}
+
+
+/***************************************************************/
+/*                                                             */
+/* Procedure: get_command                                      */
+/*                                                             */
+/* Purpose: Read a command from standard input.                */
+/*                                                             */
+/***************************************************************/
+
+void get_command(FILE * dumpsim_file) {
+    char buffer[20];
+    int start, stop, cycles;
+    int register_no, register_value;
+    int hi_reg_value, lo_reg_value;
+
+    printf("MIPS-SIM> ");
+
+    if (scanf("%s", buffer) == EOF) {
+	exit(0);
+    }
+
+    printf("\n");
+
+    switch(buffer[0]) {
+	case 'G':
+	case 'g': // go
+	    go();
+	    break;
+
+	case 'M':
+	case 'm':
+	    if (scanf("%i %i", &start, &stop) != 2)
+		break;
+	    mdump(dumpsim_file, start, stop);
+	    break;
+
+
+	case '?':
+	    help();
+	    break;
+
+	case 'Q':
+	case 'q': // quit
+	    printf("Bye.\n");
+	    exit(0);
+
+	case 'R':
+	case 'r': // run
+	    if (buffer[1] == 'd' || buffer[1] =='D') {
+		rdump(dumpsim_file);
+	    } else {
+		if (scanf("%d", &cycles) != 1) break;
+		run(cycles);
+	    }
+	    break;
+	
+	case 'I':
+	case 'i':
+	    if (scanf("%i %i", &register_no, &register_value) != 2)
+		break;
+	    CURRENT_STATE.REGS[register_no] = register_value;
+	    NEXT_STATE.REGS[register_no] = register_value;
+	    break;
+
+	case 'H':
+	case 'h':
+	    if (scanf("%i", &hi_reg_value) != 1) break;
+	    CURRENT_STATE.HI = hi_reg_value;
+	    NEXT_STATE.HI = hi_reg_value;
+	    break;
+	
+	case 'L':
+	case 'l':
+	    if (scanf("%i", &lo_reg_value) != 1) break;
+	    CURRENT_STATE.LO = lo_reg_value;
+	    NEXT_STATE.LO = lo_reg_value;
+	    break;
+
+	default:
+	    printf("Invalid Command\n");
+	    break;
+    }
+}
 
 
 /***************************************************************/
@@ -127,7 +367,7 @@ void init_memory() {
     int i;
     for (i = 0; i < MEM_NREGIONS; i++) {
 	MEM_REGIONS[i].mem = malloc(MEM_REGIONS[i].size); // allocate a RAM Space
-	mem_set(MEM_REGIONS[i].mem, 0, MEM_REGIONS[i].size);
+	memset(MEM_REGIONS[i].mem, 0, MEM_REGIONS[i].size);
     }
 
 }
@@ -188,5 +428,4 @@ int main(int argc, char *argv[]) {
     while (1)
 	get_command(dumpsim_file);
 }
-
 
