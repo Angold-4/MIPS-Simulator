@@ -297,6 +297,33 @@ void get_command(FILE * dumpsim_file) {
 
 /***************************************************************/
 /*                                                             */
+/* Procedure: mem_read_32                                      */
+/*                                                             */
+/* Purpose: Read a 32-bit word from memory                     */
+/*                                                             */
+/***************************************************************/
+uint32_t mem_read_32(uint32_t address) {
+    int i;
+    for (i = 0; i < MEM_NREGIONS; i++) {
+        if (address >= MEM_REGIONS[i].start &&
+                address < (MEM_REGIONS[i].start + MEM_REGIONS[i].size)) {
+            
+            uint32_t offset = address - MEM_REGIONS[i].start;
+
+            return
+                (MEM_REGIONS[i].mem[offset+3] << 24) |
+                (MEM_REGIONS[i].mem[offset+2] << 16) |
+                (MEM_REGIONS[i].mem[offset+1] <<  8) |
+                (MEM_REGIONS[i].mem[offset+0] <<  0);
+        }
+    }
+
+    return 0;
+}
+
+
+/***************************************************************/
+/*                                                             */
 /* Procedure: mem_write_32                                     */
 /*                                                             */
 /* Purpose: Write a 32-bit word to memory                      */
