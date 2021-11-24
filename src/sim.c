@@ -188,3 +188,24 @@ void init_target_dispatch(void) {
 	TARGET_DISPATCH[TARGET_BLTZAL] = handle_bltzal;
 	TARGET_DISPATCH[TARGET_BGEZAL] = handle_bgezal;
 }
+
+
+void process_instruction() {
+    // read the instr from memory text segment
+    uint32_t raw_instr = mem_read_32(CURRENT_STATE.PC);
+
+    int op = decode_opcode(raw_instr);
+
+    if (op == OPCODE_SPECIAL) { // 0
+	// for special instructions, decode the function value from instruction
+	int func = decode_r_funct(raw_instr);
+	(*FUNCTION_DISPATCH[func])(raw_instr); // execute this function
+    } else if (op == OPCODE_REGIMM) {
+	// for regimm instructions, decode the target value from instruction
+	int target = decode_i_rt(raw_instr);
+	(*TARGET_DISPATCH[op])(raw_instr);
+    } else {
+	// otherwise, dispatch the appropriate instruction handler based on opcode
+	(*OPCODE_DISPATCH[op])(raw_instr);
+    }
+}
