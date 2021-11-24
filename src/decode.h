@@ -28,11 +28,16 @@
 int decode_opcode(uint32_t instr);
 
 /*
+ * decode_j_target
+ * Decode target address from J-type instruction. 
+ */
+uint32_t decode_j_target(uint32_t instr);
+
+/*
  * decode_i_rt
  * Decode target register from I-type instruction. 
  */
 int decode_i_rt(uint32_t instr);
-
 
 /*
  * decode_r_funct

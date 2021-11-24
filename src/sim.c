@@ -209,3 +209,37 @@ void process_instruction() {
 	(*OPCODE_DISPATCH[op])(raw_instr);
     }
 }
+
+
+
+
+
+/* ----------------------------------------------------------------------------
+	Instruction Handlers, by Opcode 
+*/
+
+/*
+ * handle_j 
+ * Jump 
+ * Opcode: 2
+ * The 26-bit target address is shifted left two bits 
+ * and combined with the high-order bits of the address of the delay slot. 
+ * The program unconditionally jumps to this calculated address with a delay of one instruction.
+ */
+
+int handle_j(uint32_t instr) {
+    // decode target address and shift left by 2 bits
+    uint32_t target = (decode_j_target(instr) << 2); // why shift left by 2 bits?  -> Avoid overflow? (Maybe just the rule)
+
+    // isolate high order bits of current address
+    uint32_t current_addr = (CURRENT_STATE.PC & MASK_PC_HIGH); // MASK_PC_HIGH 0xF0000000
+
+    // Update the program counter unconditionally
+    NEXT_STATE.PC = current_addr + target;
+
+    return STATUS_OK;
+}
+
+
+
+

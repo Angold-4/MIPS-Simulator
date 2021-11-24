@@ -34,6 +34,23 @@ int decode_i_rt(uint32_t instr) {
 	return (int) ((instr & MASK_I_RT) >> SHIFT_I_RT);
 }
 
+/* ----------------------------------------------------------------------------
+	J-Type Instructions 
+	See module header file (decode.h) for detailed function comments. 
+*/
+
+
+uint32_t decode_j_target(uint32_t instr) {
+    //The 26-bit target address is shifted left two bits 
+    //and combined with the high-order bits of the address of the delay slot. 
+    //The program unconditionally jumps to this calculated address with a delay of one instruction.
+
+    return (uint32_t) ((instr & MASK_J_TARGET) >> SHIFT_J_TARGET);  // this is target
+    // SHIFT_J_TARGET = 0
+    // MASK_J_TARGET = 0x03FFFFFF
+    // 00000011 11111111 11111111 11111111 
+
+}
 
 // decode_r_funct
 // Decode function code from R-type instruction. 
