@@ -100,8 +100,8 @@
 #define MASK_OPCODE 0xFC000000 
 
 /* I-Type Instructions */
-#define MASK_I_RS         0x03E00000
-#define MASK_I_RT         0x001F0000
+#define MASK_I_RS         0x03E00000 // 0000 0011 1110 0000 0000 0000 0000 0000
+#define MASK_I_RT         0x001F0000 // 0000 0000 0001 1111 0000 0000 0000 0000
 #define MASK_I_IMMEDIATE  0x0000FFFF
 
 /* J-Type Instructions */

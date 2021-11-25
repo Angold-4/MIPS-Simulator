@@ -1,3 +1,16 @@
+/***************************************************************/
+/*                                                             */
+/*   MIPS-32 Instruction Level Simulator                       */
+/*                                                             */
+/*   Based on specifications published                         */
+/*   by Professor Onur Mutlu for his 2015 offering             */
+/*   of Introduction to Computer Architecture at               */
+/*   Carnegie Mellon University                                */
+/*                                                             */
+/*   Jiawei Wang (Angold-4) Nov 2021                           */ 
+/*                                                             */
+/***************************************************************/
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -241,5 +254,123 @@ int handle_j(uint32_t instr) {
 }
 
 
+/*
+ * handle_jal
+ * Jump And Link
+ * Opcode: 3
+ * The 26-bit target address is shifted left two bits 
+ * and combined with the high-order bits of the address of the delay slot. 
+ * The program unconditionally jumps to this calculated address with a 
+ * delay of one instruction. The address of the instruction after the delay slot is placed 
+ * in the link register, r31.
+ */
 
+int handle_jal(uint32_t instr) {
+    // decode target address and shift left by 2 bits
+    uint32_t target = (decode_j_target(instr) << 2); // why shift left by 2 bits?  -> Avoid overflow? (Maybe just the rule)
+
+    // isolate high order bits of current address
+    uint32_t current_addr = (CURRENT_STATE.PC & MASK_PC_HIGH); // MASK_PC_HIGH 0xF0000000
+
+    // place address of instruction after jump in link register
+    NEXT_STATE.REGS[REG_LINK] = CURRENT_STATE.PC + 4;
+    return STATUS_OK;
+}
+
+
+/*
+ * handle_beq
+ * Branch On Equal
+ * Opcode: 4
+ * The contents of general register rs and the contents of general register rt are compared. 
+ * If the two registers are equal, then the program branches to the target address
+ */
+
+int handle_beq(uint32_t instr) {
+    // decode source and target registers
+    int rs = decode_i_rs(instr);
+    int rt = decode_i_rt(instr);
+
+    // decode offset, shift left 2 bits, and sign-extend
+    int32_t offset = (int32_t) (decode_i_immediate(instr) << 2);
+
+    if (CURRENT_STATE.REGS[rs] == CURRENT_STATE.REGS[rt]) {
+	// if contents of source and target registers are equal, branch is taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+	NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+    return STATUS_OK;
+}
+
+/*
+ * handle_bne
+ * Branch On Not Equal
+ * Opcode: 5
+ */
+int handle_bne(uint32_t instr) {
+    // decode source and target registers 
+    int rs = decode_i_rs(instr);
+    int rt = decode_i_rt(instr);
+
+    // decode offset, shift left 2 bits, and sign-extend 
+    int32_t offset = (int32_t) (decode_i_immediate(instr) << 2);
+
+    if (CURRENT_STATE.REGS[rs] != CURRENT_STATE.REGS[rt]) {
+	// if contents of source and taregt registers are not equal, branch is taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+	// otherwise, not taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+
+    return STATUS_OK; 
+}
+
+/*
+ * handle_blez
+ * Branch On Less Than Or Equal Zero
+ * Opcode: 6
+ */
+int handle_blez(uint32_t instr) {
+    // decode source register
+    int rs = decode_i_rs(instr);
+
+    // decode offset, shift left 2 bits, and sign-extend 
+    int32_t offset = (int32_t) (decode_i_immediate(instr) << 2);
+
+    if (CURRENT_STATE.REGS[rs] <= 0) {
+	// if contents of source and taregt registers are not equal, branch is taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+	// otherwise, not taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+
+    return STATUS_OK; 
+}
+
+
+/*
+ * handle_bgtz
+ * Branch On Greater Than Zero
+ * Opcode: 7
+ */
+int handle_bgtz(uint32_t instr) {
+    // decode source register
+    int rs = decode_i_rs(instr);
+
+    // decode offset, shift left 2 bits, and sign-extend 
+    int32_t offset = (int32_t) (decode_i_immediate(instr) << 2);
+
+    if (CURRENT_STATE.REGS[rs] > 0) {
+	// if contents of source and taregt registers are not equal, branch is taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+	// otherwise, not taken
+	NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+
+    return STATUS_OK; 
+}
 

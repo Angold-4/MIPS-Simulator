@@ -30,13 +30,28 @@ int decode_opcode(uint32_t instr) {
 }
 
 
+/* ----------------------------------------------------------------------------
+	I-Type Instructions 
+*/
+
+int decode_i_rs(uint32_t instr) {
+    return (int) ((instr & MASK_I_RS) >> SHIFT_I_RS);
+}
+
 int decode_i_rt(uint32_t instr) {
-	return (int) ((instr & MASK_I_RT) >> SHIFT_I_RT);
+    return (int) ((instr & MASK_I_RT) >> SHIFT_I_RT);
+}
+
+/*
+ * decode_i_immediate
+ * Decode immediate value from I-type instruction. 
+ */
+int16_t decode_i_immediate(uint32_t instr) {
+    return (int16_t) ((instr & MASK_I_IMMEDIATE) >> SHIFT_I_IMMEDIATE);
 }
 
 /* ----------------------------------------------------------------------------
 	J-Type Instructions 
-	See module header file (decode.h) for detailed function comments. 
 */
 
 
@@ -52,9 +67,24 @@ uint32_t decode_j_target(uint32_t instr) {
 
 }
 
+
+/* ----------------------------------------------------------------------------
+	R-Type Instructions 
+*/
+
 // decode_r_funct
 // Decode function code from R-type instruction. 
 
 int decode_r_funct(uint32_t instr) {
-	return (int) ((instr & MASK_R_FUNCT) >> SHIFT_R_FUNCT); 
+    return (int) ((instr & MASK_R_FUNCT) >> SHIFT_R_FUNCT); 
 }
+
+
+int decode_r_rs(uint32_t instr) {
+    return (int) ((instr & MASK_R_RS) >> SHIFT_R_RS);
+}
+
+int decode_r_rt(uint32_t instr) {
+    return (int) ((instr & MASK_I_RT) >> SHIFT_R_RT);
+}
+
