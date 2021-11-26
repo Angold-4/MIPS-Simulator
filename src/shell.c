@@ -182,7 +182,6 @@ void run(int num_cycles) {
 	    printf("Simulator halted \n\n");
 	    break;
 	}
-
 	cycle();
     }
 

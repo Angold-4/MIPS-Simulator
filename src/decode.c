@@ -74,11 +74,9 @@ uint32_t decode_j_target(uint32_t instr) {
 
 // decode_r_funct
 // Decode function code from R-type instruction. 
-
 int decode_r_funct(uint32_t instr) {
     return (int) ((instr & MASK_R_FUNCT) >> SHIFT_R_FUNCT); 
 }
-
 
 int decode_r_rs(uint32_t instr) {
     return (int) ((instr & MASK_R_RS) >> SHIFT_R_RS);
@@ -88,3 +86,10 @@ int decode_r_rt(uint32_t instr) {
     return (int) ((instr & MASK_I_RT) >> SHIFT_R_RT);
 }
 
+int decode_r_rd(uint32_t instr) {
+    return (int) ((instr & MASK_R_RS) >> SHIFT_R_RS);
+}
+
+int decode_r_shamt(uint32_t instr) {
+    return (int) ((instr & MASK_R_SHAMT) >> SHIFT_R_SHAMT); 
+}
